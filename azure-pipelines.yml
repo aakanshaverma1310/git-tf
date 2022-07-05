@@ -1,0 +1,49 @@
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  subscription: VS-Ent-Dev-02SP
+  resourceGroup: aakansha_rg_tfstate
+  storageAccount: avstoragetfstate
+  container: poctfstate
+  tfstateFile: terraform.tfstate
+  
+
+steps:
+- task: TerraformInstaller@0
+  displayName: Terraform Install
+  inputs:
+    terraformVersion: 'latest'
+
+- task: TerraformTaskV2@2
+  inputs:
+    provider: 'azurerm'
+    command: 'init'
+    workingDirectory: $(System.DefaultWorkingDirectory)
+    backendServiceArm: '$(subscription)'
+    backendAzureRmResourceGroupName: '$(resourceGroup)'
+    backendAzureRmStorageAccountName: '$(storageAccount)'
+    backendAzureRmContainerName: '$(container)'
+    backendAzureRmKey: '$(tfstateFile)'
+
+- task: TerraformTaskV2@2
+  displayName: Terraform Plan
+  inputs:
+    provider: 'azurerm'
+    command: 'plan'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    commandOptions: '-out=tfplan'
+    environmentServiceNameAzureRM: '$(subscription)'
+    
+- task: TerraformTaskV2@2
+  displayName: Terraform Apply
+  inputs:
+    provider: 'azurerm'
+    command: 'apply'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    commandOptions: 'tfplan'
+    environmentServiceNameAzureRM: '$(subscription)'
+
+
